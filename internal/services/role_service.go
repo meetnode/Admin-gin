@@ -10,6 +10,7 @@ type RoleService interface {
 	GetRoles() ([]models.Role, error)
 	AssignRoleToUser(userRole *models.UserHasRole) error
 	AssignPermissionsToRole(roleID uint, permIDs []uint) error
+	DeleteRole(id uint) error
 }
 
 type roleService struct {
@@ -50,6 +51,18 @@ func (s *roleService) AssignPermissionsToRole(roleID uint, permIDs []uint) error
 		if err := s.db.GetDB().Create(&rp).Error; err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (s *roleService) DeleteRole(id uint) error {
+	var role models.Role
+	if err := s.db.GetDB().First(&role, id).Error; err != nil {
+		return err
+	}
+
+	if err := s.db.GetDB().Delete(&role).Error; err != nil {
+		return err
 	}
 	return nil
 }

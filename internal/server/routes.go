@@ -6,8 +6,12 @@ import (
 	controller "Admin-gin/internal/controllers"
 	middleware "Admin-gin/internal/middlewares"
 
+	_ "Admin-gin/docs"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -91,10 +95,16 @@ func (s *Server) RegisterRoutes() http.Handler {
 				roleRoute.POST("/permissions",
 					middleware.HasPermission(s.db, "role.update"),
 					controller.AssignPermissionsToRole)
+
+				roleRoute.DELETE("/:id",
+					middleware.HasPermission(s.db, "role.delete"),
+					controller.DeleteRole)
 			}
 		}
 	}
 
+	// Swagger endpoint
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.GET("/health", s.healthHandler)
 
 	return r
