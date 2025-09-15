@@ -105,7 +105,7 @@ definitions:
       user_id:
         type: integer
     type: object
-host: localhost:8080
+host: localhost:5000
 info:
   contact:
     email: support@swagger.io

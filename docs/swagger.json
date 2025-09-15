@@ -19,7 +19,7 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "localhost:5000",
     "basePath": "/api",
     "paths": {
         "/forgot-password": {

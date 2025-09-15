@@ -101,6 +101,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 					controller.DeleteRole)
 			}
 		}
+		api.GET("/docs", func(c *gin.Context) {
+			c.Redirect(http.StatusFound, "/swagger/index.html")
+		})
 	}
 
 	// Swagger endpoint

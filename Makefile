@@ -9,6 +9,11 @@ build:
 	
 	@go build -o main.exe cmd/api/main.go
 
+build-docs:
+	@echo "Creating docs..."
+
+	@swag init -g cmd/api/main.go
+
 # Run the application
 run:
 	@go run cmd/api/main.go
