@@ -1,53 +1,183 @@
-# Project Admin-gin
+# Admin Panel (Gin + PostgreSQL)
 
-One Paragraph of project description goes here
+A simple and modular **Admin Panel** built using the **Gin Web Framework** and **PostgreSQL**.
+This project provides a base structure for building secure, production-ready admin backends with RESTful APIs and integrated **Swagger documentation**.
 
-## Getting Started
+---
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+## 🚀 Features
 
-## MakeFile
+* Built with **Gin Framework** (high performance Go web framework)
+* Database: **PostgreSQL**
+* Follows **clean and modular project structure**
+* Integrated **Swagger documentation** (available at `/docs`)
+* Example CRUD endpoints for quick start
+* Easy to extend for any admin or backend system
 
-Run build make command with tests
-```bash
-make all
+---
+
+## 📂 Project Structure
+
+```
+│   .air.toml
+│   .env
+│   .gitignore
+│   docker-compose.yml
+│   go.mod
+│   go.sum
+│   main.exe
+│   Makefile
+│   README.md
+│
+├───cmd
+│   ├───api
+│   │       main.go              # Entry point for API server
+│   └───seed
+│           main.go              # Seeder for database initialization
+│
+├───docs
+│       docs.go
+│       swagger.json
+│       swagger.yaml
+│
+├───internal
+│   ├───controllers              # Handles request/response logic
+│   ├───database                 # DB connection and tests
+│   ├───middlewares              # JWT, role, and permission checks
+│   ├───models                   # GORM models for all entities
+│   ├───server                   # Server setup and route definitions
+│   ├───services                 # Business logic layer
+│   └───utils                    # Utility functions (crypto, jwt, mail, etc.)
+│
+└───tmp
+        build-errors.log
 ```
 
-Build the application
+---
+
+## ⚙️ Installation & Setup
+
+### 1. Clone the Repository
+
 ```bash
-make build
+git clone https://github.com/meetnode/Admin-gin.git
+cd Admin-gin
 ```
 
-Run the application
+### 2. Install Dependencies
+
 ```bash
-make run
-```
-Create DB container
-```bash
-make docker-run
+go mod tidy
 ```
 
-Shutdown DB Container
-```bash
-make docker-down
+### 3. Setup Environment Variables
+
+Rename or copy from `.env.example` file and configure your environment variables:
+
+```env
+URL=http://localhost:5000
+PORT=5000
+APP_ENV=local
+BLUEPRINT_DB_HOST=localhost
+BLUEPRINT_DB_PORT=5432
+BLUEPRINT_DB_DATABASE=admin-gin
+BLUEPRINT_DB_USERNAME=postgres
+BLUEPRINT_DB_PASSWORD=abcd
+BLUEPRINT_DB_SCHEMA=public
+SMTP_USER=xyz@gmail.com
+SMTP_PASS=zxcvbnmasgjwert
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+
+APP_SECRET="ashdjkas45dshukf"
 ```
 
-DB Integrations Test:
+---
+
+## 🏃 Run the Server
+
 ```bash
-make itest
+go run cmd/main.go
+```
+or
+
+```bash
+air
 ```
 
-Live reload the application:
-```bash
-make watch
+Server will start on:
+
+```
+http://localhost:8080
 ```
 
-Run the test suite:
-```bash
-make test
+---
+
+## 📖 API Documentation (Swagger)
+
+Swagger UI is available at:
+
+```
+http://localhost:5000/docs
 ```
 
-Clean up binary from the last build:
+Use it to explore all endpoints and test APIs interactively.
+
+---
+
+## 🧱 Tech Stack
+
+| Layer         | Technology                              |
+| ------------- | --------------------------------------- |
+| Framework     | [Gin](https://github.com/gin-gonic/gin) |
+| Database      | PostgreSQL                              |
+| ORM (if used) | GORM                                    |
+| Documentation | Swagger (swaggo/gin-swagger)            |
+| Language      | Go (Golang)                             |
+
+---
+
+## 🧩 Common Commands
+
+A preconfigured .air.toml file is already included, so just run:
 ```bash
-make clean
+air
 ```
+
+**Format code**
+
+```bash
+go fmt ./...
+```
+
+**Run Tests**
+
+```bash
+go test ./...
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+If you want to improve the project or fix a bug:
+
+1. Fork the repo
+2. Create a new branch
+3. Commit your changes
+4. Submit a pull request
+
+---
+
+## 🧠 Notes
+
+* This is a **public template**, so feel free to clone and modify it.
+* Make sure to update the database credentials in `.env` before running locally.
+* Swagger files are auto-generated and located in `/docs`.
+
+---
+
+## 📜 License
+
+This project is open-source and available under the **MIT License**.
