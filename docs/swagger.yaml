@@ -108,13 +108,10 @@ definitions:
 host: localhost:5000
 info:
   contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
+    email: meetnode@gmail.com
+    name: Meet Suthar
+    url: https://github.com/meetnode
   description: Admin API for user, role and permission management
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Admin API
   version: "1.0"

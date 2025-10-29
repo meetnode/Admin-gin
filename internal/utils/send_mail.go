@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/smtp"
 	"os"
+	"strings"
 )
 
 var url = os.Getenv("URL")
@@ -17,12 +18,14 @@ func SendMail(to, subject, body string) error {
 	addr := host + ":" + port
 	auth := smtp.PlainAuth("", from, pass, host)
 
-	msg := []byte("To: " + to + "\r\n" +
-		"Subject: " + subject + "\r\n" +
-		"\r\n" +
-		body + "\r\n")
+	msg := "From: " + from + "\n" +
+		"To: " + to + "\n" +
+		"Subject: " + subject + "\n" +
+		"MIME-version: 1.0;\n" +
+		"Content-Type: text/html; charset=\"UTF-8\";\n\n" +
+		body
 
-	return smtp.SendMail(addr, auth, from, []string{to}, msg)
+	return smtp.SendMail(addr, auth, from, []string{to}, []byte(msg))
 }
 
 func SendVerificationEmail(to, token string) error {
@@ -33,8 +36,26 @@ func SendVerificationEmail(to, token string) error {
 }
 
 func SendPasswordResetEmail(to, token string) error {
-	resetLink := fmt.Sprintf("%s/api/reset-password?token=%s", url, token)
+	baseURL := os.Getenv("URL")
+	resetLink := fmt.Sprintf("%s/api/reset-password?token=%s", baseURL, token)
+
 	subject := "Reset your password"
-	body := "Click here to reset your password: " + resetLink
+
+	templatePath := "internal/templates/reset_password.html"
+	content, err := os.ReadFile(templatePath)
+	if err != nil {
+		return fmt.Errorf("error reading email template: %w", err)
+	}
+	body := string(content)
+
+	//Add more replacements if needed in future
+	replacements := map[string]string{
+		"RESET_LINK": resetLink,
+	}
+	for key, value := range replacements {
+		placeholder := fmt.Sprintf("%%%s%%", key)
+		body = strings.ReplaceAll(body, placeholder, value)
+	}
+
 	return SendMail(to, subject, body)
 }

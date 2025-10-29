@@ -17,7 +17,7 @@ type UserService interface {
 	DeleteUser(id uint) error
 	GetUserByID(id uint) (*UserResponse, error)
 	GetUserByEmail(email string) (*models.User, error)
-	GetAllUsers() ([]UserResponse, error)
+	GetAllUsers(filter UserFilter) ([]UserResponse, error)
 	UserLogin(email, password string) (*models.User, error)
 	ChangePassword(id uint, oldPwd, newPwd string) error
 	ResetPassword(email, password string) error
@@ -30,6 +30,14 @@ type UserResponse struct {
 	Status    string        `json:"status"`
 	Roles     []models.Role `json:"roles"`
 	CreatedAt time.Time     `json:"created_at"`
+}
+
+type UserFilter struct {
+	Status string
+	Name   string
+	Email  string
+	Limit  int
+	Offset int
 }
 
 type userService struct {
@@ -77,25 +85,56 @@ func (s *userService) DeleteUser(id uint) error {
 }
 
 func (s *userService) GetUserByID(id uint) (*UserResponse, error) {
-	var user UserResponse
+	var userModel models.User
+
+	// Query the actual model (with relationships)
 	result := s.db.GetDB().
 		Model(&models.User{}).
-		Select("id", "name", "email", "status", "created_at").
-		First(&user, id)
+		Preload("Roles").
+		Preload("Roles.Permissions").
+		First(&userModel, id)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return &user, nil
+
+	userResponse := &UserResponse{
+		ID:        userModel.ID,
+		Name:      userModel.Name,
+		Email:     userModel.Email,
+		Status:    userModel.Status,
+		Roles:     userModel.Roles,
+		CreatedAt: userModel.CreatedAt,
+	}
+
+	return userResponse, nil
 }
-
-func (s *userService) GetAllUsers() ([]UserResponse, error) {
-	var users []models.User
-	result := s.db.GetDB().
+func (s *userService) GetAllUsers(filter UserFilter) ([]UserResponse, error) {
+	db := s.db.GetDB().Model(&models.User{}).
 		Preload("Roles").
-		Preload("Roles.Permissions").
-		Find(&users)
+		Preload("Roles.Permissions")
 
+	// Apply filters dynamically
+	if filter.Status != "" {
+		db = db.Where("status = ?", filter.Status)
+	}
+	if filter.Name != "" {
+		db = db.Where("name ILIKE ?", "%"+filter.Name+"%")
+	}
+	if filter.Email != "" {
+		db = db.Where("email ILIKE ?", "%"+filter.Email+"%")
+	}
+
+	// Pagination
+	if filter.Limit > 0 {
+		db = db.Limit(filter.Limit)
+	}
+	if filter.Offset > 0 {
+		db = db.Offset(filter.Offset)
+	}
+
+	var users []models.User
+	result := db.Find(&users)
 	if result.Error != nil {
 		return nil, result.Error
 	}

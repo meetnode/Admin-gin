@@ -1,14 +1,13 @@
 package controller
 
 import (
+	"Admin-gin/internal/constants"
 	"Admin-gin/internal/models"
 	"Admin-gin/internal/services"
 	"Admin-gin/internal/utils"
 	"fmt"
-	"strconv"
-
-	// "fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -53,14 +52,33 @@ type ResetPasswordRequest struct {
 // @Router /users [get]
 func UserListing(c *gin.Context) {
 	userService := services.NewUserService()
-	users, err := userService.GetAllUsers()
-	// userId, isUserId := c.Get("userID")
-	// fmt.Println("UserID from token:", userId, isUserId)
+
+	filter := services.UserFilter{
+		Status: c.Query("status"),
+		Name:   c.Query("name"),
+		Email:  c.Query("email"),
+	}
+
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
+
+	limit, _ := strconv.Atoi(limitStr)
+	offset, _ := strconv.Atoi(offsetStr)
+
+	filter.Limit = limit
+	filter.Offset = offset
+
+	users, err := userService.GetAllUsers(filter)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
-	c.JSON(200, gin.H{"users": users})
+
+	c.JSON(http.StatusOK, gin.H{
+		"users": users,
+	})
 }
 
 // LoginHandler godoc
@@ -129,10 +147,10 @@ func RegisterHandler(c *gin.Context) {
 	userData, err := userService.GetUserByEmail(req.Email)
 	fmt.Print(userData, "::userData")
 	if err != nil {
-		c.JSON(500, gin.H{"error": "somethings went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	} else if userData.Email == req.Email {
-		c.JSON(400, gin.H{"error": "email already exists"})
+		c.JSON(400, gin.H{"error": constants.ErrEmailExists})
 		return
 	}
 	user, err := userService.AddUser(&req)
@@ -146,7 +164,7 @@ func RegisterHandler(c *gin.Context) {
 		RoleID: 2,
 	})
 
-	c.JSON(200, gin.H{"message": "Registered successfully, check your email to verify"})
+	c.JSON(200, gin.H{"message": constants.MsgRegisteredVerify})
 }
 
 // VerifyEmail godoc
@@ -163,23 +181,23 @@ func VerifyEmail(c *gin.Context) {
 	token := c.Query("token")
 	decryptedEmail, err := utils.Decrypt(token)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "email is not valid"})
+		c.JSON(500, gin.H{"error": constants.ErrInvalidEmail})
 		return
 	}
 	userService := services.NewUserService()
 	user, err := userService.GetUserByEmail(decryptedEmail)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
 
 	user.Status = "active"
 	if err = userService.UpdateUser(user); err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
 
-	c.JSON(200, gin.H{"message": "Email verified successfully"})
+	c.JSON(200, gin.H{"message": constants.MsgEmailVerify})
 }
 
 // UpdateUser godoc
@@ -199,7 +217,7 @@ func UpdateUser(c *gin.Context) {
 	userID := c.Param("id")
 	id, err := strconv.ParseUint(userID, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": constants.ErrInvalidUserId})
 		return
 	}
 
@@ -216,11 +234,11 @@ func UpdateUser(c *gin.Context) {
 
 	userService := services.NewUserService()
 	if err := userService.UpdateUser(&user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": constants.MsgUserUpdated})
 }
 
 // CreatePermission godoc
@@ -243,10 +261,10 @@ func CreatePermission(c *gin.Context) {
 	}
 	permissionService := services.NewPermissionService()
 	if err := permissionService.AddPermission(&perm); err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Permission created successfully"})
+	c.JSON(200, gin.H{"message": constants.MsgPermissionCreated})
 }
 
 // CreateRole godoc
@@ -269,10 +287,10 @@ func CreateRole(c *gin.Context) {
 	}
 	roleService := services.NewRoleService()
 	if err := roleService.AddRole(&role); err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Role created successfully"})
+	c.JSON(200, gin.H{"message": constants.MsgRoleCreated})
 }
 
 // AssignRoleToUser godoc
@@ -296,10 +314,10 @@ func AssignRoleToUser(c *gin.Context) {
 	}
 	roleService := services.NewRoleService()
 	if err := roleService.AssignRoleToUser(&userRole); err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Role assigned to user successfully"})
+	c.JSON(200, gin.H{"message": constants.MsgRoleAssignUser})
 }
 
 // AssignPermissionsToRole godoc
@@ -322,10 +340,10 @@ func AssignPermissionsToRole(c *gin.Context) {
 	}
 	roleService := services.NewRoleService()
 	if err := roleService.AssignPermissionsToRole(rolePerm.RoleID, rolePerm.PermissionIDs); err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Permissions assigned to role successfully"})
+	c.JSON(200, gin.H{"message": constants.MsgPermissionAssignRole})
 }
 
 // GetPermissions godoc
@@ -342,7 +360,7 @@ func GetPermissions(c *gin.Context) {
 	permissionService := services.NewPermissionService()
 	permissions, err := permissionService.GetPermissions()
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
 	c.JSON(200, permissions)
@@ -364,15 +382,15 @@ func DeletePermission(c *gin.Context) {
 	permissionID := c.Param("id")
 	id, err := strconv.ParseUint(permissionID, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid permission ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": constants.ErrInvalidPermissionId})
 		return
 	}
 	permissionService := services.NewPermissionService()
 	if err := permissionService.DeletePermission(uint(id)); err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Permission deleted successfully"})
+	c.JSON(200, gin.H{"message": constants.MsgPermissionDeleted})
 }
 
 // GetRoles godoc
@@ -389,7 +407,7 @@ func GetRoles(c *gin.Context) {
 	roleService := services.NewRoleService()
 	roles, err := roleService.GetRoles()
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
 	c.JSON(200, roles)
@@ -411,13 +429,13 @@ func GetUserByID(c *gin.Context) {
 	userID := c.Param("id")
 	id, err := strconv.ParseUint(userID, 10, 32)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "Invalid user ID"})
+		c.JSON(400, gin.H{"error": constants.ErrInvalidUserId})
 		return
 	}
 	userService := services.NewUserService()
 	user, err := userService.GetUserByID(uint(id))
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
 	c.JSON(200, user)
@@ -439,15 +457,15 @@ func DeleteUser(c *gin.Context) {
 	userID := c.Param("id")
 	id, err := strconv.ParseUint(userID, 10, 32)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "Invalid user ID"})
+		c.JSON(400, gin.H{"error": constants.ErrInvalidUserId})
 		return
 	}
 	userService := services.NewUserService()
 	if err := userService.DeleteUser(uint(id)); err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
-	c.JSON(200, gin.H{"message": "User deleted successfully"})
+	c.JSON(200, gin.H{"message": constants.MsgUserDeleted})
 }
 
 // ChangePassword godoc
@@ -473,16 +491,16 @@ func ChangePassword(c *gin.Context) {
 	userID := c.Param("id")
 	id, err := strconv.ParseUint(userID, 10, 32)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "Invalid user ID"})
+		c.JSON(400, gin.H{"error": constants.ErrInvalidUserId})
 		return
 	}
 
 	userService := services.NewUserService()
 	if err := userService.ChangePassword(uint(id), req.OldPassword, req.NewPassword); err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Password changed successfully"})
+	c.JSON(200, gin.H{"message": constants.MsgPasswordChanged})
 }
 
 // ForgotPassword godoc
@@ -508,10 +526,10 @@ func ForgotPassword(c *gin.Context) {
 		return
 	}
 	if err := utils.SendPasswordResetEmail(req.Email, token); err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Password reset email sent"})
+	c.JSON(200, gin.H{"message": constants.MsgPasswordResetEmail})
 }
 
 // ResetPassword godoc
@@ -538,10 +556,10 @@ func ResetPassword(c *gin.Context) {
 	}
 	userService := services.NewUserService()
 	if err := userService.ResetPassword(email, req.Password); err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Password reset successfully"})
+	c.JSON(200, gin.H{"message": constants.MsgPasswordReset})
 }
 
 // DeleteRole godoc
@@ -565,8 +583,8 @@ func DeleteRole(c *gin.Context) {
 	}
 	roleService := services.NewRoleService()
 	if err := roleService.DeleteRole(uint(id)); err != nil {
-		c.JSON(500, gin.H{"error": "Something went wrong"})
+		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Role deleted successfully"})
+	c.JSON(200, gin.H{"message": constants.MsgRoleDeleted})
 }
