@@ -91,6 +91,13 @@ SMTP_PORT=587
 
 APP_SECRET="ashdjkas45dshukf"
 ```
+### 4. Run migrations or seed data
+
+You can use the provided `cmd/seed/main.go` file to seed default users, roles, or permissions:
+
+```bash
+go run cmd/seed/main.go
+```
 
 ---
 
