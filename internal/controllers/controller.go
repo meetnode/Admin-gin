@@ -5,7 +5,6 @@ import (
 	"Admin-gin/internal/models"
 	"Admin-gin/internal/services"
 	"Admin-gin/internal/utils"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -145,7 +144,7 @@ func RegisterHandler(c *gin.Context) {
 	}
 	userService := services.NewUserService()
 	userData, err := userService.GetUserByEmail(req.Email)
-	fmt.Print(userData, "::userData")
+
 	if err != nil {
 		c.JSON(500, gin.H{"error": constants.ErrSomethingWentWrong})
 		return
