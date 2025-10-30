@@ -91,6 +91,7 @@ func killProcessTree(cmd *exec.Cmd, timeout time.Duration) {
 func main() {
 	// Parse command line flags
 	columnLayout := flag.Bool("column", false, "Use column layout instead of row layout")
+	firstTime := flag.Bool("setup", false, "For first time setup")
 	flag.Parse()
 
 	app := tview.NewApplication()
@@ -129,6 +130,21 @@ func main() {
 	// Prepare commands. On UNIX set a new process group so we can kill children.
 	backendCmd := exec.Command("air")
 	frontendCmd := exec.Command("npm", "run", "dev", "--prefix", "frontend")
+
+	if *firstTime {
+		installCmd := exec.Command("npm", "ci", "--prefix", "frontend")
+		if err := streamLogs(installCmd, frontendView, "Frontend-Install", "yellow"); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to start frontend install: %v\n", err)
+		} else {
+			if err := installCmd.Wait(); err != nil {
+				fmt.Fprintf(os.Stderr, "frontend install failed: %v\n", err)
+				os.Exit(1)
+			}
+		}
+
+		// After successful install, start the frontend dev server.
+		frontendCmd = exec.Command("npm", "run", "dev", "--prefix", "frontend")
+	}
 
 	// if runtime.GOOS != "windows" {
 	// 	backendCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
